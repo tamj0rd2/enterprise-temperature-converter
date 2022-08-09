@@ -30,7 +30,7 @@ func newCliConverterDriver(tb testing.TB) *cliConverterDriver {
 	return &cliConverterDriver{binaryPath: binaryPath}
 }
 
-func (d cliConverterDriver) FromFToC(i int) (int, error) {
+func (d cliConverterDriver) FromFToC(f float64) (float64, error) {
 	var buf bytes.Buffer
 
 	cmd := exec.Command(d.binaryPath)
@@ -41,7 +41,7 @@ func (d cliConverterDriver) FromFToC(i int) (int, error) {
 	}
 
 	output := buf.String()
-	c, err := strconv.Atoi(output)
+	c, err := strconv.ParseFloat(output, 64)
 	if err != nil {
 		panic(err)
 	}
