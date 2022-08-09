@@ -2,6 +2,7 @@ package acceptance
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/alecthomas/assert/v2"
 	"os"
 	"os/exec"
@@ -15,6 +16,7 @@ type cliConverterDriver struct {
 }
 
 func newCliConverterDriver(tb testing.TB) *cliConverterDriver {
+	tb.Helper()
 	dir, err := os.MkdirTemp("", "converter-*")
 	assert.NoError(tb, err)
 	tb.Cleanup(func() {
@@ -30,17 +32,32 @@ func newCliConverterDriver(tb testing.TB) *cliConverterDriver {
 	return &cliConverterDriver{binaryPath: binaryPath}
 }
 
-func (d cliConverterDriver) FromFToC(f float64) (float64, error) {
-	var buf bytes.Buffer
+func (d cliConverterDriver) FromFToC(inputF float64) (float64, error) {
+	var stdoutBuf bytes.Buffer
+	var stderrBuf bytes.Buffer
 
 	cmd := exec.Command(d.binaryPath)
-	cmd.Stdout = &buf
+	cmd.Stdout = &stdoutBuf
+	cmd.Stderr = &stderrBuf
 
-	if err := cmd.Run(); err != nil {
-		panic(err)
+	w, err := cmd.StdinPipe()
+	if err != nil {
+		return 0, err
 	}
 
-	output := buf.String()
+	if err := cmd.Start(); err != nil {
+		return 0, fmt.Errorf("failed to run cli - %w: %s", err, stderrBuf.String())
+	}
+
+	if _, err := fmt.Fprintf(w, "%g\n", inputF); err != nil {
+		return 0, fmt.Errorf("failed to write to stdin - %w: %s", err, stderrBuf.String())
+	}
+
+	if err := cmd.Wait(); err != nil {
+		return 0, fmt.Errorf("failed to run cli - %w: %s", err, stderrBuf.String())
+	}
+
+	output := stdoutBuf.String()
 	c, err := strconv.ParseFloat(output, 64)
 	if err != nil {
 		panic(err)
