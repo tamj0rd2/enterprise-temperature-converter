@@ -11,18 +11,20 @@ type Converter interface {
 
 // TODO: JIRA TICKET: Convert from C to F
 func TestConvertingTemperatures(t *testing.T) {
-	var (
-		expectedC = 0
-	)
+	t.Run("Converging from F to C", func(t *testing.T) {
+		var (
+			expectedC = 0
+		)
 
-	// arrange
-	var converter Converter
-	converter = newCliConverterDriver(t)
+		// arrange
+		var converter Converter
+		converter = newCliConverterDriver(t)
 
-	// act
-	c, err := converter.FromFToC(32)
+		// act
+		c, err := converter.FromFToC(32)
 
-	// assert
-	assert.NoError(t, err)
-	assert.Equal(t, expectedC, c)
+		// assert
+		assert.NoError(t, err)
+		assert.Equal(t, expectedC, c)
+	})
 }
